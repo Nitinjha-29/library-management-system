@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Athenaeum – Library Management Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- The CSS file is connected here -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Sign in / Register -->
+  <div class="auth" id="authScreen" hidden>
+    <aside class="auth-art">
+      <a class="brand" href="#"><span class="brand-mark">A</span><span>Athenaeum</span></a>
+      <div>
+        <h2>Every book, member and due date in one place.</h2>
+        <p>Sign in to issue and return books, manage the catalogue, and keep track of fines.</p>
+      </div>
+      <div class="shelf" aria-hidden="true">
+        <i style="--h:70%;--c:#2f4b7c"></i><i style="--h:100%;--c:#b8892f"></i><i style="--h:82%;--c:#8a3b32"></i>
+        <i style="--h:60%;--c:#2d6a5a"></i><i style="--h:92%;--c:#5b7fb5"></i><i style="--h:76%;--c:#d9b45f"></i>
+        <i style="--h:66%;--c:#b3412f"></i><i style="--h:88%;--c:#3f8a76"></i>
+      </div>
+    </aside>
+
+    <section class="auth-panel">
+      <div class="auth-card">
+        <div class="tabs">
+          <button class="tab active" id="tabLogin" type="button">Sign in</button>
+          <button class="tab" id="tabRegister" type="button">Register</button>
+        </div>
+
+        <form id="loginForm" novalidate>
+          <h1>Welcome back</h1>
+          <p class="sub">Sign in to manage the library.</p>
+          <label>Email <input name="email" type="email" required autocomplete="username"></label>
+          <label>Password <input name="password" type="password" required autocomplete="current-password"></label>
+          <label class="check"><input name="remember" type="checkbox" checked> Keep me signed in on this device</label>
+          <p class="form-msg error" id="loginMsg" role="alert"></p>
+          <button class="btn wide" type="submit">Sign in</button>
+        </form>
+
+        <form id="registerForm" novalidate hidden>
+          <h1>Create an account</h1>
+          <p class="sub">Register as a librarian to get started.</p>
+          <label>Full name <input name="name" required maxlength="60" autocomplete="name"></label>
+          <label>Email <input name="email" type="email" required autocomplete="username"></label>
+          <label>Password <input name="password" type="password" required minlength="8" autocomplete="new-password"></label>
+          <label>Confirm password <input name="confirm" type="password" required autocomplete="new-password"></label>
+          <p class="hint">Use at least 8 characters.</p>
+          <p class="form-msg error" id="registerMsg" role="alert"></p>
+          <button class="btn wide" type="submit">Create account</button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="app" id="app" hidden>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <a class="brand" href="#">
+        <span class="brand-mark">A</span>
+        <span>Athenaeum</span>
+      </a>
+      <nav aria-label="Main">
+        <a class="nav-link active" href="#" data-nav="dashboard">Dashboard</a>
+        <a class="nav-link" href="#" data-nav="catalogue">Catalogue</a>
+        <a class="nav-link" href="#" data-nav="issue">Issue &amp; return</a>
+        <a class="nav-link" href="#" data-nav="members">Members</a>
+        <a class="nav-link" href="#" data-nav="reservations">Reservations</a>
+        <a class="nav-link" href="#" data-nav="fines">Fines</a>
+        <a class="nav-link" href="#" data-nav="reports">Reports</a>
+      </nav>
+      <div class="sidebar-foot">
+        <strong>Reading room</strong>
+        <span>38 of 60 seats free</span>
+        <div class="meter"><i style="width:37%"></i></div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="greeting">Welcome</h1>
+          <p class="date" id="today"></p>
+        </div>
+        <div class="actions">
+          <label class="search">
+            <span class="sr-only">Search books or members</span>
+            <input type="search" id="searchInput" placeholder="Search the catalogue">
+          </label>
+          <button class="btn" id="issueTopBtn" type="button">Issue a book</button>
+          <span class="avatar" id="avatar" aria-label="Profile"></span>
+          <button class="btn ghost" id="logoutBtn" type="button">Sign out</button>
+        </div>
+      </header>
+
+      <!-- Key figures: one strip, not four cards -->
+      <section class="figures" aria-label="Key figures" data-view="dashboard">
+        <div><span class="num" id="bookCount">0</span><span class="lbl">Books in catalogue</span></div>
+        <div><span class="num" id="issuedToday">0</span><span class="lbl">Issued today</span></div>
+        <div><span class="num" id="memberCount">0</span><span class="lbl">Active members</span></div>
+        <div class="warn"><span class="num" id="overdueCount">0</span><span class="lbl">Overdue books</span></div>
+      </section>
+
+      <div class="grid" data-view="dashboard">
+
+        <!-- Due slips: the centrepiece -->
+        <section class="panel due">
+          <div class="panel-head">
+            <h2>Due back today</h2>
+            <a href="#" id="dueAll">View all loans</a>
+          </div>
+          <ul class="slips" id="dueSlips"></ul>
+        </section>
+
+        <!-- Circulation chart -->
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Books issued per month</h2>
+            <span class="muted">2026</span>
+          </div>
+          <div class="bars" role="img" aria-label="Bar chart of books issued from April to September">
+            <div class="bar" style="--h:48%"><b>820</b><span>Apr</span></div>
+            <div class="bar" style="--h:58%"><b>990</b><span>May</span></div>
+            <div class="bar" style="--h:34%"><b>580</b><span>Jun</span></div>
+            <div class="bar" style="--h:72%"><b>1,230</b><span>Jul</span></div>
+            <div class="bar" style="--h:88%"><b>1,510</b><span>Aug</span></div>
+            <div class="bar now" style="--h:100%"><b>1,720</b><span>Sep</span></div>
+          </div>
+        </section>
+
+        <!-- Genres -->
+        <section class="panel">
+          <div class="panel-head">
+            <h2>What members borrow</h2>
+          </div>
+          <ul class="genres">
+            <li><span>Engineering &amp; technology</span><div class="track"><i style="width:84%"></i></div><em>38%</em></li>
+            <li><span>Fiction</span><div class="track"><i style="width:52%"></i></div><em>23%</em></li>
+            <li><span>Science</span><div class="track"><i style="width:36%"></i></div><em>16%</em></li>
+            <li><span>History &amp; politics</span><div class="track"><i style="width:26%"></i></div><em>12%</em></li>
+            <li><span>Other</span><div class="track"><i style="width:25%"></i></div><em>11%</em></li>
+          </ul>
+        </section>
+
+        <!-- Overdue -->
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Longest overdue</h2>
+            <a href="#">Send reminders</a>
+          </div>
+          <table>
+            <thead><tr><th>Member</th><th>Book</th><th class="r">Days late</th><th class="r">Fine</th></tr></thead>
+            <tbody id="overdueRows"></tbody>
+          </table>
+        </section>
+
+        <!-- New arrivals -->
+        <section class="panel">
+          <div class="panel-head">
+            <h2>New arrivals</h2>
+            <a href="#" id="addLink">Add a book</a>
+          </div>
+          <ul class="arrivals">
+            <li><span class="dot" style="--c:#2f4b7c"></span><div><strong>Deep Learning with Python</strong><small>François Chollet · 6 copies</small></div></li>
+            <li><span class="dot" style="--c:#b8892f"></span><div><strong>Sapiens</strong><small>Yuval Noah Harari · 4 copies</small></div></li>
+            <li><span class="dot" style="--c:#2d6a5a"></span><div><strong>The Psychology of Money</strong><small>Morgan Housel · 5 copies</small></div></li>
+          </ul>
+        </section>
+
+      </div>
+<!-- Catalogue: insert, update, delete -->
+        <section class="panel" id="catalogue" data-view="catalogue" hidden>
+          <div class="panel-head">
+            <h2>Catalogue</h2>
+            <button class="btn" id="addBtn" type="button">Add a book</button>
+          </div>
+          <div class="scroll">
+            <table class="books">
+              <thead>
+                <tr><th>Title</th><th>Author</th><th>ISBN</th><th>Genre</th><th class="r">Available / total</th><th class="r">Actions</th></tr>
+              </thead>
+              <tbody id="bookRows"></tbody>
+            </table>
+          </div>
+          <p class="empty" id="emptyMsg" hidden></p>
+        </section>
+
+        
+        <!-- Issue & return -->
+        <div class="view" data-view="issue" hidden>
+          <section class="panel">
+            <div class="panel-head"><h2>Issue a book</h2></div>
+            <form id="issueForm" class="inline-form">
+              <label>Member <select id="issueMember" required></select></label>
+              <label>Book <select id="issueBook" required></select></label>
+              <label>Loan days <input id="issueDays" type="number" min="1" max="60" value="14" required></label>
+              <button class="btn" type="submit">Issue book</button>
+            </form>
+            <p class="form-msg" id="issueMsg" role="status"></p>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h2>Currently issued</h2></div>
+            <div class="scroll"><table class="books">
+              <thead><tr><th>Book</th><th>Member</th><th>Issued</th><th>Due</th><th>Status</th><th class="r">Action</th></tr></thead>
+              <tbody id="loanRows"></tbody>
+            </table></div>
+          </section>
+        </div>
+
+        <!-- Members -->
+        <div class="view" data-view="members" hidden>
+          <section class="panel">
+            <div class="panel-head"><h2>Add a member</h2></div>
+            <form id="memberForm" class="inline-form">
+              <label>Name <input id="memberName" required maxlength="60"></label>
+              <label>Department <input id="memberDept" required maxlength="50"></label>
+              <button class="btn" type="submit">Add member</button>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h2>Members</h2></div>
+            <div class="scroll"><table class="books">
+              <thead><tr><th>Name</th><th>Department</th><th class="r">Books out</th><th class="r">Action</th></tr></thead>
+              <tbody id="memberRows"></tbody>
+            </table></div>
+          </section>
+        </div>
+
+        <!-- Reservations -->
+        <div class="view" data-view="reservations" hidden>
+          <section class="panel">
+            <div class="panel-head"><h2>Reserve a book</h2></div>
+            <form id="resForm" class="inline-form">
+              <label>Member <select id="resMember" required></select></label>
+              <label>Book <select id="resBook" required></select></label>
+              <button class="btn" type="submit">Reserve</button>
+            </form>
+            <p class="form-msg" id="resMsg" role="status"></p>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h2>Reservations</h2></div>
+            <div class="scroll"><table class="books">
+              <thead><tr><th>Book</th><th>Member</th><th>Reserved on</th><th class="r">Action</th></tr></thead>
+              <tbody id="resRows"></tbody>
+            </table></div>
+          </section>
+        </div>
+
+        <!-- Fines -->
+        <section class="panel" data-view="fines" hidden>
+          <div class="panel-head"><h2>Fines due</h2><span class="muted" id="fineTotal"></span></div>
+          <div class="scroll"><table class="books">
+            <thead><tr><th>Member</th><th>Book</th><th>Due date</th><th class="r">Days late</th><th class="r">Fine</th></tr></thead>
+            <tbody id="fineRows"></tbody>
+          </table></div>
+        </section>
+
+        <!-- Reports -->
+        <section class="panel" data-view="reports" hidden>
+          <div class="panel-head"><h2>Library summary</h2></div>
+          <ul class="stats" id="reportList"></ul>
+        </section>
+    </main>
+  </div>
+  <dialog id="bookDialog">
+    <form id="bookForm">
+      <h2 id="dialogTitle">Add a book</h2>
+      <label>Title <input name="title" required maxlength="120"></label>
+      <label>Author <input name="author" required maxlength="80"></label>
+      <label>ISBN <input name="isbn" maxlength="20"></label>
+      <label>Genre
+        <select name="genre">
+          <option>Engineering &amp; technology</option>
+          <option>Fiction</option>
+          <option>Science</option>
+          <option>History &amp; politics</option>
+          <option>Other</option>
+        </select>
+      </label>
+      <label>Copies <input name="copies" type="number" min="1" max="999" value="1" required></label>
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost" id="cancelBtn">Cancel</button>
+        <button type="submit" class="btn">Save book</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="script.js"></script>
+  <script src="auth.js"></script>
+</body>
+</html>
